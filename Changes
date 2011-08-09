@@ -1,0 +1,8 @@
+Changes for Perl extension DBD-SQLite
+
+2.3.1 2011-08-04
+    - Modified to DBD-Spatialite
+
+1.29  2010-07-04
+    - Initial Branch from DBD-SQLite
+

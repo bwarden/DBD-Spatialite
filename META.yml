@@ -1,0 +1,33 @@
+--- #YAML:1.0
+name:               DBD-Spatialite
+version:            2.3.1
+abstract:           Self Contained Spatialite Geo RDBMS in a DBI Driver
+author:
+    - Lokkju Brennr <lokkju@cpan.org>
+license:            perl
+distribution_type:  module
+configure_requires:
+    DBI:                  1.57
+    ExtUtils::CChecker:   0
+    ExtUtils::MakeMaker:  6.48
+    File::Find:           0
+    File::Spec:           0.82
+build_requires:
+    File::Spec:  0.82
+    Test::More:  0.42
+requires:
+    DBI:        1.57
+    Tie::Hash:  0
+resources:
+    bugtracker:  http://code.google.com/p/dbd-spatialite/issues/list
+    license:     http://dev.perl.org/licenses/
+    repository:  http://code.google.com/p/dbd-spatialite/
+no_index:
+    directory:
+        - t
+        - inc
+        - util
+generated_by:       ExtUtils::MakeMaker version 6.55_02
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4
