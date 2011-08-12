@@ -21,6 +21,8 @@ sub OPTIONAL {
 
 our %args = map { split /\s*=\s*/ } @ARGV;
 my $AMALGAMATION_LOCATION = $args{ AMALGAMATION_LOCATION } || "./amalgamation/stable/";
+my $LDFLAGS = $args{ LDFLAGS };
+my $CCFLAGS = $args{ CCFLAGS };
 
 # Because DBI generates a postamble at configure-time, we need
 # the required version of DBI very early.
@@ -91,10 +93,36 @@ my $cc = ExtUtils::CChecker->new;
 # Prepare Compiler Options
 
 my @CC_LIBS = ();
-push @CC_LIBS, "-lgeos -lgeos_c -lproj";
+push @CC_LIBS, "-lgeos_c -lproj";
 
 $cc->find_libs_for(
-	diag => "iconv is not available in libc, nor is it available as a library.",
+	diag => "GEOS libraries could not be found.  Please install GEOS, or else specify where it can be found via the CC_LIBPATH and CC_INCPATH parameters.",
+  libs => [ "","geos_c","geos geos_c"],
+  source => q[
+	  #include <geos_c.h>
+    int main(void)
+    {
+      (void) GEOSversion();
+      return 0;
+    }
+  ]);
+$cc->find_libs_for(
+	diag => "PROJ4 libraries could not be found.  Please install PROJ4, or else specify where it can be found via the LDFLAGS and CCFLAGS parameters.",
+  libs => [ "","proj"],
+  source => q[
+	  #include <proj_api.h>
+    int main(void)
+    {
+      char *args[] = { "proj=merc", "ellps=clrk66", "lat_ts=33" };
+      projPJ pj;
+      if (!(pj = pj_init(3, args)))
+        exit(1);
+      return 0;
+    }
+  ]);
+
+$cc->find_libs_for(
+	diag => "iconv is not available in libc, and can not be found. Please install iconv, or else specify where it can be found via the CC_LIBPATH and CC_IPATH parameters.",
   libs => [ "","iconv"],
   source => q[
 	  #include <iconv.h>
@@ -136,6 +164,7 @@ my @CC_DEFINE = (
 );
 my @CC_FLAGS = (
 	"-o \${*}.o",
+  ($CCFLAGS ? ($CCFLAGS) : () ),
 );
 if ( $Config{d_usleep} || $Config{osname} =~ m/linux/ ) {
 	push @CC_DEFINE, '-DHAVE_USLEEP=1';
@@ -145,6 +174,7 @@ unless ( $Config{usethreads} ) {
 }
 
 my @CC_OPTIONS = (
+  ($LDFLAGS ? (LDDLFLAGS    => $LDFLAGS) : () ),
 	CCFLAGS      => join( ' ', @CC_FLAGS  ),
 	INC          => join( ' ', @CC_INC    ),
 	DEFINE       => join( ' ', @CC_DEFINE ),

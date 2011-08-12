@@ -1,5 +1,10 @@
 Changes for Perl extension DBD-SQLite
 
+2.3.1.1 2011-08-12
+    - Fixed MANIFEST
+    - Checks for GEOS, PROJ4, and iconv libs/functions
+    - minor fixes
+
 2.3.1 2011-08-04
     - Modified to DBD-Spatialite
 
