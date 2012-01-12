@@ -20,7 +20,8 @@ sub OPTIONAL {
 }
 
 our %args = map { split /\s*=\s*/ } @ARGV;
-my $AMALGAMATION_LOCATION = $args{ AMALGAMATION_LOCATION } || "./amalgamation/stable/";
+my $BUILD_VERSION = "3.0.1";
+my $AMALGAMATION_LOCATION = $args{ AMALGAMATION_LOCATION } || "./amalgamation/$BUILD_VERSION/";
 my $LDFLAGS = $args{ LDFLAGS };
 my $CCFLAGS = $args{ CCFLAGS };
 
@@ -141,17 +142,6 @@ my @CC_INC = (
 	"-I".$AMALGAMATION_LOCATION,
 );
 
-# get spatialite version
-my $SPATIALITE_VERSION;
-
-open(SLC,$AMALGAMATION_LOCATION . "spatialite.c") or die("Could not open open ${AMALGAMATION_LOCATION}spatialite.c.");
-foreach my $line (<SLC>) {
-	chomp($line);              # remove the newline from $line.
-	if ($line =~ /spatialiteversion\[\]\s*=\s*\"([\d\.]+)\"/) {
-		$SPATIALITE_VERSION = $1;
-		last;
-	}
-}
 my @CC_DEFINE = (
 	# '-DSQLITE_CORE',
 	'-DSQLITE_ENABLE_FTS3',
@@ -160,7 +150,8 @@ my @CC_DEFINE = (
 	'-DSQLITE_ENABLE_COLUMN_METADATA',
 	'-DNDEBUG=1',
 	'-DSQLITE_ENABLE_RTREE=1',
-	"-DSPATIALITE_VERSION=\\\"$SPATIALITE_VERSION\\\"",
+	"-DSPATIALITE_VERSION=\\\"$BUILD_VERSION\\\"",
+        "-DOMIT_FREEXL=1",
 );
 my @CC_FLAGS = (
 	"-o \${*}.o",

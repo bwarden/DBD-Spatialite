@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               DBD-Spatialite
-version:            2.3.1.1
+version:            3.0.1
 abstract:           Self Contained Spatialite Geo RDBMS in a DBI Driver
 author:
     - Lokkju Brennr <lokkju@cpan.org>
