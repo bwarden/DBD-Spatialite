@@ -149,7 +149,7 @@ update_hook(dbh, hook)
         RETVAL
 
 
-SV*
+static int
 set_authorizer(dbh, authorizer)
     SV *dbh
     SV *authorizer
@@ -157,7 +157,7 @@ set_authorizer(dbh, authorizer)
         DBD::Spatialite::db::x_spatialite_set_authorizer = 1
     CODE:
     {
-        RETVAL = (SV*) sqlite_db_set_authorizer( aTHX_ dbh, authorizer );
+        RETVAL = sqlite_db_set_authorizer( aTHX_ dbh, authorizer );
     }
     OUTPUT:
         RETVAL

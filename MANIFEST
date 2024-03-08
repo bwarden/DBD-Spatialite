@@ -1,18 +1,3 @@
-amalgamation/3.0.1/gaiaaux.h
-amalgamation/3.0.1/gaiaexif.h
-amalgamation/3.0.1/gaiageo.h
-amalgamation/3.0.1/gg_advanced.h
-amalgamation/3.0.1/gg_const.h
-amalgamation/3.0.1/gg_core.h
-amalgamation/3.0.1/gg_dynamic.h
-amalgamation/3.0.1/gg_formats.h
-amalgamation/3.0.1/gg_mbr.h
-amalgamation/3.0.1/gg_structs.h
-amalgamation/3.0.1/spatialite.c
-amalgamation/3.0.1/spatialite.h
-amalgamation/3.0.1/sqlite3.c
-amalgamation/3.0.1/sqlite3.h
-amalgamation/3.0.1/sqlite3ext.h
 Changes
 dbdimp.c
 dbdimp.h
@@ -88,5 +73,3 @@ t/rt_40594_nullable.t
 t/rt_48393_debug_panic_with_commit.t
 t/rt_50503_fts3.t
 t/rt_52573_manual_exclusive_lock.t
-util/getamalgamation.pl
-util/getsqlite.pl

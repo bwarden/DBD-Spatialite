@@ -20,8 +20,6 @@ sub OPTIONAL {
 }
 
 our %args = map { split /\s*=\s*/ } @ARGV;
-my $BUILD_VERSION = "3.0.1";
-my $AMALGAMATION_LOCATION = $args{ AMALGAMATION_LOCATION } || "./amalgamation/$BUILD_VERSION/";
 my $LDFLAGS = $args{ LDFLAGS };
 my $CCFLAGS = $args{ CCFLAGS };
 
@@ -94,12 +92,26 @@ my $cc = ExtUtils::CChecker->new;
 # Prepare Compiler Options
 
 my @CC_LIBS = ();
-push @CC_LIBS, "-lgeos_c -lproj";
+#push @CC_LIBS, "-lgeos_c -lproj";
 
+$cc->find_libs_for(
+  diag => "Spatialite libraries could not be found.  Please install Spatialite, or else specify where it can be found via the CC_LIBPATH and CC_INCPATH parameters.",
+  libs => [ "","spatialite"],
+  source => q[
+    #include <stdlib.h>
+	  #include <sqlite3.h>
+	  #include <spatialite.h>
+    int main(void)
+    {
+      (void) spatialite_initialize();
+      return 0;
+    }
+  ]);
 $cc->find_libs_for(
 	diag => "GEOS libraries could not be found.  Please install GEOS, or else specify where it can be found via the CC_LIBPATH and CC_INCPATH parameters.",
   libs => [ "","geos_c","geos geos_c"],
   source => q[
+    #include <stdlib.h>
 	  #include <geos_c.h>
     int main(void)
     {
@@ -108,15 +120,15 @@ $cc->find_libs_for(
     }
   ]);
 $cc->find_libs_for(
-	diag => "PROJ4 libraries could not be found.  Please install PROJ4, or else specify where it can be found via the LDFLAGS and CCFLAGS parameters.",
+	diag => "PROJ6 libraries could not be found.  Please install PROJ6, or else specify where it can be found via the LDFLAGS and CCFLAGS parameters.",
   libs => [ "","proj"],
   source => q[
-	  #include <proj_api.h>
+    #include <stdlib.h>
+	  #include <proj.h>
     int main(void)
     {
-      char *args[] = { "proj=merc", "ellps=clrk66", "lat_ts=33" };
-      projPJ pj;
-      if (!(pj = pj_init(3, args)))
+      PJ *P;
+      if (!(P = proj_create(PJ_DEFAULT_CTX, "+proj=merc +ellps=clrk66 +lat_ts=33")))
         exit(1);
       return 0;
     }
@@ -126,6 +138,7 @@ $cc->find_libs_for(
 	diag => "iconv is not available in libc, and can not be found. Please install iconv, or else specify where it can be found via the CC_LIBPATH and CC_IPATH parameters.",
   libs => [ "","iconv"],
   source => q[
+    #include <stdlib.h>
 	  #include <iconv.h>
     int main(void)
     {
@@ -139,19 +152,11 @@ push @CC_LIBS, @{$cc->extra_linker_flags};
 my @CC_INC = (
 	'-I.',
 	'-I$(DBI_INSTARCH_DIR)',
-	"-I".$AMALGAMATION_LOCATION,
 );
 
 my @CC_DEFINE = (
-	# '-DSQLITE_CORE',
-	'-DSQLITE_ENABLE_FTS3',
-	#  Disabled until we have a test for this
-	# '-DSQLITE_ENABLE_FTS3_PARENTHESIS',  # for sqlite >= 3.6.10
-	'-DSQLITE_ENABLE_COLUMN_METADATA',
 	'-DNDEBUG=1',
-	'-DSQLITE_ENABLE_RTREE=1',
-	"-DSPATIALITE_VERSION=\\\"$BUILD_VERSION\\\"",
-        "-DOMIT_FREEXL=1",
+  "-DOMIT_FREEXL=1",
 );
 my @CC_FLAGS = (
 	"-o \${*}.o",
@@ -179,8 +184,8 @@ my @CC_OPTIONS = (
 
 #####################################################################
 # Find all C files
-my @C_FILES = split(/\s/,"./dbdimp.c ${AMALGAMATION_LOCATION}sqlite3.c ${AMALGAMATION_LOCATION}spatialite.c ./Spatialite.c");
-my $O_FILES = split(/\s/,"./dbdimp.o ${AMALGAMATION_LOCATION}sqlite3.o ${AMALGAMATION_LOCATION}spatialite.o ./Spatialite.o");
+my @C_FILES = split(/\s/,"./dbdimp.c ./Spatialite.c");
+my $O_FILES = split(/\s/,"./dbdimp.o ./Spatialite.o");
 #my $LDFROM = "dbdimp.o  spatialite.o  Spatialite.o  sqlite3.o";
 #####################################################################
 # Hand off to ExtUtils::MakeMaker
@@ -248,7 +253,7 @@ WriteMakefile(
 	),
 	OPTIMIZE         => '-O2',
 	clean            => {
-		FILES => 'Spatialite.xsi config.h tv.log *.old ' . $AMALGAMATION_LOCATION . '*.o',
+		FILES => 'Spatialite.xsi config.h tv.log *.old *.o',
 	},
 	PL_FILES         => {},
 	EXE_FILES        => [],
@@ -296,51 +301,3 @@ sub test_via_script {
 		$self->SUPER::test_via_script($perl, $script);
 	}
 }
-sub get_amalgamation {
-        my ($dir_root,$site_root) = @_;
-        my $download_file = "";
-        # Download the Spatialite amalgamation if it isn't there, already.
-        eval { mkpath($dir_root) };
-        if ($@) {
-                die "Couldn't create $dir_root: $@\n";
-        }
-        print "Downloading amalgation.\n";
-
-        # find out what's current amalgamation ZIP file
-        my $download_page = get($site_root . "/sources.html");
-        if($download_page =~ /(libspatialite-amalgamation.*?\.zip)/) {
-                $download_file = $1;
-        } else {
-                die "Couldn't find the amalgamation archive name.\n";
-        }
-        my $amalgamation_url = $site_root . "/" . $download_file;
-        my $zip_dir = $download_file;
-        $zip_dir =~ s/\.zip//;
-        # and download it
-        my $download_status = getstore($amalgamation_url, "tmp.zip");
-        die "Error $download_status on $amalgamation_url" unless is_success($download_status);
-
-        my $zf = Archive::Zip->new("tmp.zip");
-
-        my @files = (
-                "sqlite3.c",
-                "headers/spatialite/sqlite3.h",
-                "spatialite.c",
-                "headers/spatialite/sqlite3ext.h",
-                "headers/spatialite/spatialite.h",
-                "headers/spatialite/gaiaaux.h",
-                "headers/spatialite/gaiaexif.h",
-                "headers/spatialite/gaiageo.h"
-        );
-        foreach(@files) {
-                my $fn = $_;
-                my ($lfn) = reverse(split(/\//,$fn,-1));
-                my $afn = $zip_dir . "/" . $fn;
-                print "Extracting " . $afn . "\n";
-                $zf->extractMember($afn,$dir_root . '/' . $lfn);
-        }
-        unlink("tmp.zip")
-}
-
-
- 
